@@ -1,14 +1,17 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { JournalEntry } from '@/types/journal';
-import StarRating from './StarRating';
+import StarRating from '@/components/common/StarRating';
+import JournalCardMenu from './JournalCardMenu';
 import { Colors } from '@/constants/colors';
 
 interface JournalCardProps {
   entry: JournalEntry;
   onPress: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
 }
 
-export default function JournalCard({ entry, onPress }: JournalCardProps) {
+export default function JournalCard({ entry, onPress, onDelete, onEdit }: JournalCardProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -44,7 +47,10 @@ export default function JournalCard({ entry, onPress }: JournalCardProps) {
       <View style={styles.content}>
         <View style={styles.titleRow}>
           <Text style={styles.title} numberOfLines={1}>{entry.title}</Text>
-          {entry.rating && <StarRating rating={entry.rating} readonly size="small" />}
+          <View style={styles.titleActions}>
+            {entry.rating && <StarRating rating={entry.rating} readonly size="small" />}
+            <JournalCardMenu onDelete={onDelete} onEdit={onEdit} />
+          </View>
         </View>
         <Text style={styles.description} numberOfLines={3}>
           {entry.content}
@@ -131,6 +137,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.text,
     flex: 1,
+  },
+  titleActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   description: {
     fontSize: 15,

@@ -7,24 +7,119 @@ import {
   ScrollView,
   SafeAreaView,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Alert
 } from 'react-native';
-import { useState } from 'react';
-import { useRouter } from 'expo-router';
-import StarRating from '@/components/StarRating';
+import { useState, useEffect } from 'react';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import StarRating from '@/components/common/StarRating';
+import MoodPicker from '@/components/journal/MoodPicker';
+import { createJournal, updateJournal } from '@/services/database';
 import { Colors } from '@/constants/colors';
 
 export default function WriteDayScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  
+  // Edit mode kontrolü
+  const isEditMode = params.editMode === 'true';
+  const entryId = params.entryId as string;
+  
   const [content, setContent] = useState('');
   const [rating, setRating] = useState(0);
   const [location, setLocation] = useState('');
   const [note, setNote] = useState('');
+  const [mood, setMood] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    // TODO: Save journal entry
-    console.log({ content, rating, location, note });
-    router.back();
+  // Edit mode'da default değerleri yükle
+  useEffect(() => {
+    if (isEditMode) {
+      setContent(params.content as string || '');
+      setRating(parseInt(params.rating as string) || 0);
+      setLocation(params.location as string || '');
+      setNote(params.note as string || '');
+      setMood(params.mood as string || '');
+    }
+  }, [isEditMode]);
+
+  const handleClear = () => {
+    Alert.alert(
+      'Clear All',
+      'Are you sure you want to clear all fields?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => {
+            setContent('');
+            setRating(0);
+            setLocation('');
+            setNote('');
+            setMood('');
+          }
+        }
+      ]
+    );
+  };
+
+  const handleSave = async () => {
+    if (!content.trim()) {
+      Alert.alert('Oops!', 'Please write something about your day 📝');
+      return;
+    }
+
+    if (rating === 0) {
+      Alert.alert('Wait!', 'How was your day? Rate it with stars ⭐');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      
+      // Başlık oluştur (ilk 50 karakter)
+      const title = content.trim().substring(0, 50) + (content.length > 50 ? '...' : '');
+      
+      if (isEditMode && entryId) {
+        // Edit mode - güncelle
+        await updateJournal(entryId, {
+          title,
+          content: content.trim(),
+          rating,
+          mood: mood || undefined,
+          location: location.trim() || undefined,
+          note: note.trim() || undefined,
+        });
+        
+        Alert.alert('Updated! ✨', 'Your journal entry has been updated', [
+          { text: 'OK', onPress: () => router.back() }
+        ]);
+      } else {
+        // Create mode - yeni oluştur
+        const today = new Date();
+        const dateString = today.toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        await createJournal({
+          date: dateString,
+          title,
+          content: content.trim(),
+          rating,
+          mood: mood || undefined,
+          location: location.trim() || undefined,
+          note: note.trim() || undefined,
+        });
+        
+        Alert.alert('Success! 🎉', 'Your journal entry has been saved', [
+          { text: 'OK', onPress: () => router.back() }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error saving journal:', error);
+      Alert.alert('Error', 'Failed to save your entry. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAddImage = () => {
@@ -37,11 +132,13 @@ export default function WriteDayScreen() {
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <ScrollView 
           style={styles.scrollView}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Main Content Input */}
           <View style={styles.section}>
@@ -54,7 +151,14 @@ export default function WriteDayScreen() {
               value={content}
               onChangeText={setContent}
               textAlignVertical="top"
+              returnKeyType="default"
+              blurOnSubmit={false}
             />
+          </View>
+
+          {/* Mood Picker */}
+          <View style={styles.section}>
+            <MoodPicker selectedMood={mood} onSelectMood={setMood} />
           </View>
 
           {/* Rating Section */}
@@ -86,6 +190,7 @@ export default function WriteDayScreen() {
               placeholderTextColor={Colors.textLight}
               value={location}
               onChangeText={setLocation}
+              returnKeyType="done"
             />
           </View>
 
@@ -99,6 +204,7 @@ export default function WriteDayScreen() {
               value={note}
               onChangeText={setNote}
               maxLength={100}
+              returnKeyType="done"
             />
             <Text style={styles.charCount}>{note.length}/100</Text>
           </View>
@@ -114,14 +220,26 @@ export default function WriteDayScreen() {
 
         </ScrollView>
 
-        {/* Save Button - Fixed at bottom */}
+        {/* Buttons - Fixed at bottom */}
         <View style={styles.footer}>
           <TouchableOpacity 
-            style={[styles.saveButton, !content && styles.saveButtonDisabled]}
-            onPress={handleSave}
-            disabled={!content}
+            style={styles.clearButton}
+            onPress={handleClear}
           >
-            <Text style={styles.saveButtonText}>Save Entry</Text>
+            <Text style={styles.clearButtonText}>Clear All</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[
+              styles.saveButton, 
+              (!content || rating === 0 || saving) && styles.saveButtonDisabled
+            ]}
+            onPress={handleSave}
+            disabled={!content || rating === 0 || saving}
+          >
+            <Text style={styles.saveButtonText}>
+              {saving ? 'Saving...' : isEditMode ? 'Update Entry' : 'Save Entry'}
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -142,7 +260,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 120, // Footer için daha fazla boşluk
   },
   section: {
     marginBottom: 24,
@@ -226,8 +344,25 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     borderTopWidth: 1,
     borderTopColor: Colors.primaryLight,
+    flexDirection: 'row',
+    gap: 12,
+  },
+  clearButton: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 18,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.danger,
+  },
+  clearButtonText: {
+    color: Colors.danger,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   saveButton: {
+    flex: 2,
     backgroundColor: Colors.primary,
     borderRadius: 16,
     padding: 18,

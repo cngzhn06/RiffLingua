@@ -1,16 +1,51 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { mockJournals } from '@/data/mockJournals';
-import StarRating from '@/components/StarRating';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { useState, useCallback } from 'react';
+import { getJournalByDate, updateJournal } from '@/services/database';
+import { JournalEntry } from '@/types/journal';
+import StarRating from '@/components/common/StarRating';
 import { Colors } from '@/constants/colors';
 
 export default function SingleDayJournalScreen() {
   const { date } = useLocalSearchParams();
   const router = useRouter();
   
-  const entry = mockJournals.find(j => j.date === date);
-  const [rating, setRating] = useState(entry?.rating || 0);
+  const [entry, setEntry] = useState<JournalEntry | null>(null);
+  const [rating, setRating] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Sayfa her göründüğünde yeniden yükle
+  useFocusEffect(
+    useCallback(() => {
+      loadEntry();
+    }, [date])
+  );
+
+  const loadEntry = async () => {
+    try {
+      const dateString = Array.isArray(date) ? date[0] : date;
+      if (dateString) {
+        const journalEntry = await getJournalByDate(dateString);
+        setEntry(journalEntry);
+        setRating(journalEntry?.rating || 0);
+      }
+    } catch (error) {
+      console.error('Error loading journal:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRatingChange = async (newRating: number) => {
+    setRating(newRating);
+    if (entry?.id) {
+      try {
+        await updateJournal(entry.id, { rating: newRating });
+      } catch (error) {
+        console.error('Error updating rating:', error);
+      }
+    }
+  };
 
   if (!entry) {
     return (
@@ -72,6 +107,24 @@ export default function SingleDayJournalScreen() {
           {/* Title */}
           <Text style={styles.title}>{entry.title}</Text>
 
+          {/* Rating */}
+          <View style={styles.ratingSection}>
+            <Text style={styles.ratingLabel}>How was your day?</Text>
+            <StarRating 
+              rating={rating} 
+              onRatingChange={handleRatingChange}
+              size="large"
+            />
+            {rating > 0 && (
+              <Text style={styles.ratingText}>
+                {rating === 5 ? 'Amazing! 🤩' : 
+                 rating === 4 ? 'Great! 😊' : 
+                 rating === 3 ? 'Good 😐' : 
+                 rating === 2 ? 'Okay 😕' : 'Not great 😢'}
+              </Text>
+            )}
+          </View>
+
           {/* Content */}
           <View style={styles.contentSection}>
             <Text style={styles.journalContent}>{entry.content}</Text>
@@ -91,7 +144,20 @@ export default function SingleDayJournalScreen() {
           {/* Edit Button */}
           <TouchableOpacity 
             style={styles.editButton}
-            onPress={() => router.push('/screens/write-day')}
+            onPress={() => router.push({
+              pathname: '/screens/write-day',
+              params: {
+                editMode: 'true',
+                entryId: entry.id,
+                date: entry.date,
+                title: entry.title,
+                content: entry.content,
+                rating: entry.rating?.toString() || '0',
+                mood: entry.mood || '',
+                location: entry.location || '',
+                note: entry.note || '',
+              }
+            })}
           >
             <Text style={styles.editButtonText}>✏️ Edit Entry</Text>
           </TouchableOpacity>

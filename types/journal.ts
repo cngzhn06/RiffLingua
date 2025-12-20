@@ -8,5 +8,7 @@ export interface JournalEntry {
   steps?: number;
   location?: string;
   rating?: number; // 1-5 yıldız
+  note?: string; // Quick note
+  created_at?: string;
+  updated_at?: string;
 }
-
