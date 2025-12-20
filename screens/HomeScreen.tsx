@@ -1,171 +1,252 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Colors } from '@/constants/colors';
 
 export default function HomeScreen() {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Today's Practice</Text>
-      </View>
-
-      <View style={styles.content}>
-        {/* Song of the Day */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardIcon}>🎵</Text>
-            <Text style={styles.cardTitle}>Song of the Day</Text>
-          </View>
-          <View style={styles.cardContent}>
-            <View style={styles.songInfo}>
-              <Text style={styles.songTitle}>Bad Guy</Text>
-              <Text style={styles.artistName}>Billie Eilish</Text>
-            </View>
-            <TouchableOpacity 
-              style={styles.startButton}
-              onPress={() => router.push('/screens/song')}
-            >
-              <Text style={styles.buttonText}>Start</Text>
-            </TouchableOpacity>
-          </View>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView 
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerEmoji}>✨</Text>
+          <Text style={styles.headerTitle}>Today's Practice</Text>
+          <Text style={styles.headerSubtitle}>Choose your learning adventure</Text>
         </View>
 
-        {/* Movie Clip of the Day */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardIcon}>🎬</Text>
-            <Text style={styles.cardTitle}>Movie Clip of the Day</Text>
-          </View>
-          <View style={styles.cardContent}>
-            <View style={styles.movieInfo}>
-              <Text style={styles.movieTitle}>▶ Friends</Text>
-            </View>
-            <TouchableOpacity 
-              style={styles.watchButton}
-              onPress={() => router.push('/screens/movie-clip')}
-            >
-              <Text style={styles.buttonText}>Watch</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Daily Journal */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardIcon}>📝</Text>
-            <Text style={styles.cardTitle}>Daily Journal</Text>
-          </View>
-          <Text style={styles.journalDescription}>Write about your day in English!</Text>
+        <View style={styles.content}>
+          {/* Song of the Day */}
           <TouchableOpacity 
-            style={styles.writeButton}
-            onPress={() => router.push('/screens/daily-journal')}
+            style={[styles.card, styles.songCard]}
+            onPress={() => router.push('/screens/song')}
+            activeOpacity={0.85}
           >
-            <Text style={styles.buttonText}>Write</Text>
+            <View style={styles.cardIconContainer}>
+              <Text style={styles.cardIconLarge}>🎵</Text>
+            </View>
+            <View style={styles.cardContent}>
+              <Text style={[styles.cardLabel, styles.songLabel]}>SONG OF THE DAY</Text>
+              <Text style={styles.cardTitle}>Bad Guy</Text>
+              <Text style={styles.cardSubtitle}>Billie Eilish</Text>
+            </View>
+            <View style={styles.arrowContainer}>
+              <Text style={styles.arrow}>→</Text>
+            </View>
           </TouchableOpacity>
+
+          {/* Movie Clip of the Day */}
+          <TouchableOpacity 
+            style={[styles.card, styles.movieCard]}
+            onPress={() => router.push('/screens/movie-clip')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.cardIconContainer}>
+              <Text style={styles.cardIconLarge}>🎬</Text>
+            </View>
+            <View style={styles.cardContent}>
+              <Text style={[styles.cardLabel, styles.movieLabel]}>MOVIE CLIP</Text>
+              <Text style={styles.cardTitle}>Friends</Text>
+              <Text style={styles.cardSubtitle}>Season 1, Episode 1</Text>
+            </View>
+            <View style={styles.arrowContainer}>
+              <Text style={styles.arrow}>→</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Daily Journal */}
+          <TouchableOpacity 
+            style={[styles.card, styles.journalCard]}
+            onPress={() => router.push('/screens/daily-journal')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.cardIconContainer}>
+              <Text style={styles.cardIconLarge}>📝</Text>
+            </View>
+            <View style={styles.cardContent}>
+              <Text style={[styles.cardLabel, styles.journalLabel]}>DAILY JOURNAL</Text>
+              <Text style={styles.cardTitle}>Write Your Story</Text>
+              <Text style={styles.cardSubtitle}>Express yourself in English</Text>
+            </View>
+            <View style={styles.arrowContainer}>
+              <Text style={styles.arrow}>→</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Stats Card */}
+          <View style={styles.statsCard}>
+            <Text style={styles.statsTitle}>🔥 Your Progress</Text>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>7</Text>
+                <Text style={styles.statLabel}>Day Streak</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>24</Text>
+                <Text style={styles.statLabel}>Entries</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>12</Text>
+                <Text style={styles.statLabel}>Songs</Text>
+              </View>
+            </View>
+          </View>
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#4A90E2',
-    padding: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
+    backgroundColor: Colors.primary,
+    padding: 32,
+    paddingTop: 24,
+    paddingBottom: 40,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+  headerEmoji: {
+    fontSize: 40,
+    marginBottom: 8,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 36,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.surface,
+    marginBottom: 8,
+  },
+  headerSubtitle: {
+    fontSize: 17,
+    color: Colors.surface + 'DD',
+    fontWeight: '500',
   },
   content: {
-    padding: 16,
-    gap: 16,
+    padding: 20,
+    paddingTop: 24,
+    gap: 20,
+    paddingBottom: 40,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 24,
+    padding: 28,
+    minHeight: 180,
+    justifyContent: 'space-between',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  songCard: {
+    backgroundColor: '#FF6B9D',
+  },
+  movieCard: {
+    backgroundColor: '#6C63FF',
+  },
+  journalCard: {
+    backgroundColor: '#00D9A3',
+  },
+  cardIconContainer: {
     marginBottom: 12,
   },
-  cardIcon: {
-    fontSize: 24,
-    marginRight: 8,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#4A90E2',
+  cardIconLarge: {
+    fontSize: 56,
   },
   cardContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  songInfo: {
     flex: 1,
+    justifyContent: 'center',
   },
-  songTitle: {
-    fontSize: 20,
+  cardLabel: {
+    fontSize: 12,
     fontWeight: 'bold',
-    color: '#333',
+    letterSpacing: 1.5,
+    marginBottom: 8,
+    opacity: 0.9,
+  },
+  songLabel: {
+    color: '#FFFFFF',
+  },
+  movieLabel: {
+    color: '#FFFFFF',
+  },
+  journalLabel: {
+    color: '#FFFFFF',
+  },
+  cardTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.surface,
     marginBottom: 4,
   },
-  artistName: {
+  cardSubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: Colors.surface + 'DD',
+    fontWeight: '500',
   },
-  movieInfo: {
-    flex: 1,
+  arrowContainer: {
+    alignSelf: 'flex-end',
+    marginTop: 12,
   },
-  movieTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+  arrow: {
+    fontSize: 32,
+    color: Colors.surface,
+    fontWeight: 'bold',
   },
-  startButton: {
-    backgroundColor: '#8BC34A',
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 8,
+  statsCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 24,
+    padding: 28,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: Colors.primaryLight + '20',
   },
-  watchButton: {
-    backgroundColor: '#4A90E2',
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 8,
+  statsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginBottom: 20,
   },
-  journalDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
-  },
-  writeButton: {
-    backgroundColor: '#4A90E2',
-    paddingVertical: 12,
-    borderRadius: 8,
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statNumber: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: Colors.primary,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 13,
+    color: Colors.textSecondary,
     fontWeight: '600',
   },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: Colors.backgroundDark,
+  },
 });
-

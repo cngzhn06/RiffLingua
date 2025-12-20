@@ -1,0 +1,55 @@
+import { JournalEntry } from '@/types/journal';
+
+export const mockJournals: JournalEntry[] = [
+  {
+    id: '1',
+    date: '2025-09-12',
+    title: 'Morning outing to Ocean Beach',
+    content: 'I dreamed about surfing last night. Whenever that happens, I know I\'m going to have a great day in the water. Sarah',
+    images: ['beach1', 'beach2', 'beach3', 'beach4'],
+    mood: '😊',
+    steps: 1250,
+    location: 'Ocean Beach',
+    rating: 5,
+  },
+  {
+    id: '2',
+    date: '2025-09-11',
+    title: 'Afternoon hike, Mount Diablo',
+    content: 'What a day! She and I were in town and decided to take a hike. The views were amazing and the weather was perfect.',
+    images: ['mountain1'],
+    mood: '🌟',
+    steps: 8234,
+    location: 'Mt. Diablo State Park',
+    rating: 5,
+  },
+  {
+    id: '3',
+    date: '2025-09-10',
+    title: 'Coffee with friends',
+    content: 'Met up with old friends at the local cafe. We talked for hours about everything and nothing. It felt great to reconnect.',
+    mood: '☕',
+    steps: 3200,
+    location: 'Downtown Cafe',
+    rating: 4,
+  },
+  {
+    id: '4',
+    date: '2025-09-09',
+    title: 'Productive work day',
+    content: 'Finally finished that project I\'ve been working on for weeks. Feeling accomplished and ready for the weekend!',
+    mood: '💪',
+    steps: 5100,
+    rating: 4,
+  },
+  {
+    id: '5',
+    date: '2025-09-08',
+    title: 'Rainy day reading',
+    content: 'Perfect weather to stay inside and finish my book. Made some hot chocolate and enjoyed the sound of rain.',
+    mood: '📚',
+    steps: 1800,
+    rating: 3,
+  },
+];
+
