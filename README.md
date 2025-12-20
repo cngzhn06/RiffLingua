@@ -1,50 +1,115 @@
-# Welcome to your Expo app 👋
+# RiffLingua 🎵
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Learn English through music, movies, and daily journaling!
 
-## Get started
+## 🚀 Quick Start
 
-1. Install dependencies
+### Prerequisites
+- Node.js 20.15.1+
+- npm or yarn
+- Expo Go app (for testing)
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### Installation
 
 ```bash
-npm run reset-project
+# Clone the repository
+git clone <your-repo-url>
+cd RiffLingua
+
+# Install dependencies
+npm install
+
+# Create .env file from example
+cp .env.example .env
+# Add your YouTube API key to .env
+
+# Start the development server
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🔐 Environment Setup
 
-## Learn more
+Create a `.env` file in the root directory:
 
-To learn more about developing your project with Expo, look at the following resources:
+```env
+EXPO_PUBLIC_YOUTUBE_API_KEY=your_youtube_api_key_here
+EXPO_PUBLIC_APP_NAME=RiffLingua
+EXPO_PUBLIC_PACKAGE_NAME=com.cengizhancaliskan.rifflingua
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Getting YouTube API Key
 
-## Join the community
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create a new project
+3. Enable **YouTube Data API v3**
+4. Create credentials (API Key)
+5. Restrict the key with:
+   - Package name: `com.cengizhancaliskan.rifflingua`
+   - SHA-1: (from EAS credentials)
 
-Join our community of developers creating universal apps.
+## 📦 Features
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- ✅ **Daily Journal** - Write and track your English learning journey
+- ✅ **Dark Mode** - Light and dark theme support
+- ✅ **Onboarding** - Welcome screens for new users
+- 🎵 **Song Learning** - Learn English through music lyrics
+- 🎬 **Movie Clips** - Practice with movie scenes (coming soon)
+- 📚 **Vocabulary** - Track learned words (coming soon)
+
+## 🏗️ Tech Stack
+
+- **Framework**: Expo + React Native
+- **Navigation**: Expo Router
+- **Database**: SQLite (expo-sqlite)
+- **State Management**: React Hooks + Context
+- **Styling**: React Native StyleSheet
+- **APIs**: YouTube Data API v3
+
+## 📱 App Credentials
+
+```
+Package Name: com.cengizhancaliskan.rifflingua
+Bundle ID (iOS): com.cengizhancaliskan.rifflingua
+EAS Project: @zignech/RiffLingua
+```
+
+## 🔒 Security Notes
+
+- `.env` file is gitignored (contains API keys)
+- Use `.env.example` as template
+- Keystore managed by EAS (cloud)
+- API keys restricted by package name + SHA-1
+
+## 🛠️ Development
+
+```bash
+# Start development server
+npm start
+
+# Run on Android
+npm run android
+
+# Run on iOS
+npm run ios
+
+# Build with EAS
+npx eas build --platform android
+```
+
+## 📝 Project Structure
+
+```
+RiffLingua/
+├── app/                    # Expo Router pages
+├── components/            # Reusable components
+│   ├── common/           # Common UI components
+│   ├── home/             # Home screen components
+│   └── journal/          # Journal-specific components
+├── screens/              # Screen components
+├── services/             # API services & database
+├── types/                # TypeScript types
+├── constants/            # App constants & themes
+├── data/                 # Mock data & initial content
+└── contexts/             # React Context providers
+```
+

@@ -9,9 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "bundleIdentifier": "com.cengizhancaliskan.rifflingua",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.cengizhancaliskan.rifflingua",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -44,6 +46,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "99a7c811-49b9-40be-b708-cfa59e258da7"
+      }
     }
   }
 }
