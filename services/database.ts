@@ -73,6 +73,15 @@ export async function getJournalByDate(date: string): Promise<JournalEntry | nul
   return result || null;
 }
 
+export async function getJournalById(id: string): Promise<JournalEntry | null> {
+  const database = await getDatabase();
+  const result = await database.getFirstAsync<JournalEntry>(
+    'SELECT * FROM journals WHERE id = ?',
+    [id]
+  );
+  return result || null;
+}
+
 export async function updateJournal(id: string, entry: Partial<JournalEntry>): Promise<void> {
   const database = await getDatabase();
   

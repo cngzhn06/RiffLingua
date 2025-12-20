@@ -46,7 +46,7 @@ export default function JournalCard({ entry, onPress, onDelete, onEdit }: Journa
       {/* Content */}
       <View style={styles.content}>
         <View style={styles.titleRow}>
-          <Text style={styles.title} numberOfLines={1}>{entry.title}</Text>
+          <Text style={styles.title} numberOfLines={1}>{entry.note}</Text>
           <View style={styles.titleActions}>
             {entry.rating && <StarRating rating={entry.rating} readonly size="small" />}
             <JournalCardMenu onDelete={onDelete} onEdit={onEdit} />

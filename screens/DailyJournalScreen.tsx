@@ -50,12 +50,21 @@ export default function DailyJournalScreen() {
 
   const filteredJournals = getFilteredJournals();
 
-  const handleCardPress = (date: string) => {
-    router.push(`/screens/single-day-journal?date=${date}`);
+  const handleCardPress = (id: string, date: string) => {
+    console.log('🎯 Card pressed, ID:', id, 'Date:', date);
+    // Push with ID and date
+    router.push({
+      pathname: '/screens/single-day-journal',
+      params: { id, date, key: Date.now().toString() }
+    });
   };
 
   const handleDateSelect = (date: string) => {
-    router.push(`/screens/single-day-journal?date=${date}`);
+    console.log('📅 Date selected from calendar:', date);
+    router.push({
+      pathname: '/screens/single-day-journal',
+      params: { date, key: Date.now().toString() }
+    });
   };
 
   const handleWriteNew = () => {
@@ -127,7 +136,7 @@ export default function DailyJournalScreen() {
               <JournalCard
                 key={entry.id}
                 entry={entry}
-                onPress={() => handleCardPress(entry.date)}
+                onPress={() => handleCardPress(entry.id, entry.date)}
                 onDelete={() => handleDelete(entry.id)}
                 onEdit={() => handleEdit(entry)}
               />

@@ -80,6 +80,28 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* Debug Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Debug</Text>
+          
+          <View style={[styles.settingCard, { backgroundColor: theme.cardBackground }]}>
+            <TouchableOpacity 
+              style={styles.settingRow} 
+              onPress={() => router.push('/debug-database' as any)}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={[styles.settingTitle, { color: theme.textPrimary }]}>
+                  🔍 View Database
+                </Text>
+                <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
+                  Check all journal entries
+                </Text>
+              </View>
+              <Text style={[styles.arrow, { color: theme.textSecondary }]}>→</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* About Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>About</Text>
@@ -101,7 +123,7 @@ export default function SettingsScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: theme.textSecondary }]}>
-            ❤️
+            Made with ❤️ for language learners - by zignechan
           </Text>
         </View>
       </ScrollView>

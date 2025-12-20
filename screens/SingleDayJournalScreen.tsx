@@ -1,35 +1,41 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { useState, useCallback } from 'react';
-import { getJournalByDate, updateJournal } from '@/services/database';
+import { useState, useCallback, useEffect } from 'react';
+import { getJournalById, getJournalByDate } from '@/services/database';
 import { JournalEntry } from '@/types/journal';
-import StarRating from '@/components/common/StarRating';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export default function SingleDayJournalScreen() {
   const { theme } = useTheme();
-  const { date } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const id = params.id;
+  const date = params.date;
+  const key = params.key; // Unique key for forcing reload
   const router = useRouter();
   
   const [entry, setEntry] = useState<JournalEntry | null>(null);
-  const [rating, setRating] = useState(0);
   const [loading, setLoading] = useState(true);
-
-  // Sayfa her göründüğünde yeniden yükle
-  useFocusEffect(
-    useCallback(() => {
-      loadEntry();
-    }, [date])
-  );
 
   const loadEntry = async () => {
     try {
-      const dateString = Array.isArray(date) ? date[0] : date;
-      if (dateString) {
-        const journalEntry = await getJournalByDate(dateString);
-        setEntry(journalEntry);
-        setRating(journalEntry?.rating || 0);
+      setLoading(true);
+      let journalEntry: JournalEntry | null = null;
+      
+      // Önce ID ile dene (DailyJournalScreen'den geliyorsa)
+      if (id) {
+        const idString = Array.isArray(id) ? id[0] : id;
+        console.log('🔍 Loading entry by ID:', idString);
+        journalEntry = await getJournalById(idString);
       }
+      // ID yoksa date ile dene (CalendarModal'dan geliyorsa)
+      else if (date) {
+        const dateString = Array.isArray(date) ? date[0] : date;
+        console.log('🔍 Loading entry by Date:', dateString);
+        journalEntry = await getJournalByDate(dateString);
+      }
+      
+      console.log('📄 Loaded entry:', journalEntry ? `ID: ${journalEntry.id}, Date: ${journalEntry.date}, Title: ${journalEntry.title?.substring(0, 30)}` : 'null');
+      setEntry(journalEntry);
     } catch (error) {
       console.error('Error loading journal:', error);
     } finally {
@@ -37,16 +43,21 @@ export default function SingleDayJournalScreen() {
     }
   };
 
-  const handleRatingChange = async (newRating: number) => {
-    setRating(newRating);
-    if (entry?.id) {
-      try {
-        await updateJournal(entry.id, { rating: newRating });
-      } catch (error) {
-        console.error('Error updating rating:', error);
-      }
+  // Key değiştiğinde yeniden yükle (her tıklamada farklı key)
+  useEffect(() => {
+    if (id || date) {
+      loadEntry();
     }
-  };
+  }, [key, id, date]);
+
+  // Sayfa her göründüğünde de yeniden yükle (edit sonrası için)
+  useFocusEffect(
+    useCallback(() => {
+      if (id || date) {
+        loadEntry();
+      }
+    }, [id, date])
+  );
 
   if (!entry) {
     return (
@@ -79,11 +90,29 @@ export default function SingleDayJournalScreen() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          {/* Date Header */}
+          {/* Date Header with Mood */}
           <View style={styles.dateHeader}>
             <Text style={[styles.date, { color: theme.textSecondary }]}>{formatDate(entry.date)}</Text>
             {entry.mood && <Text style={styles.mood}>{entry.mood}</Text>}
           </View>
+
+          {/* Rating Display (View Only) */}
+          {entry.rating && entry.rating > 0 && (
+            <View style={[styles.ratingDisplay, {
+              backgroundColor: theme.cardBackground,
+              borderColor: theme.primary + '30',
+            }]}>
+              <Text style={styles.ratingEmoji}>
+                {entry.rating === 5 ? '🤩' : 
+                 entry.rating === 4 ? '😊' : 
+                 entry.rating === 3 ? '😐' : 
+                 entry.rating === 2 ? '😕' : '😢'}
+              </Text>
+              <Text style={[styles.ratingText, { color: theme.primary }]}>
+                {'⭐'.repeat(entry.rating)}
+              </Text>
+            </View>
+          )}
 
           {/* Images Grid */}
           {entry.images && entry.images.length > 0 && (
@@ -105,41 +134,27 @@ export default function SingleDayJournalScreen() {
             </View>
           )}
 
-          {/* Title */}
-          <Text style={[styles.title, { color: theme.textPrimary }]}>{entry.title}</Text>
-
-          {/* Rating */}
-          <View style={[styles.ratingSection, {
-            backgroundColor: theme.cardBackground,
-            borderColor: theme.border,
-          }]}>
-            <Text style={[styles.ratingLabel, { color: theme.textPrimary }]}>How was your day?</Text>
-            <StarRating 
-              rating={rating} 
-              onRatingChange={handleRatingChange}
-              size="large"
-            />
-            {rating > 0 && (
-              <Text style={[styles.ratingText, { color: theme.primary }]}>
-                {rating === 5 ? 'Amazing! 🤩' : 
-                 rating === 4 ? 'Great! 😊' : 
-                 rating === 3 ? 'Good 😐' : 
-                 rating === 2 ? 'Okay 😕' : 'Not great 😢'}
+          {/* Quick Note as Title */}
+          {entry.note && (
+            <View style={styles.noteSection}>
+              <Text style={[styles.noteTitle, { color: theme.textPrimary }]}>
+                💭 {entry.note}
               </Text>
-            )}
-          </View>
+            </View>
+          )}
 
-          {/* Content */}
+          {/* Main Content */}
           <View style={[styles.contentSection, {
             backgroundColor: theme.cardBackground,
             borderColor: theme.border,
           }]}>
+            <Text style={[styles.contentLabel, { color: theme.textSecondary }]}>Today's Journal</Text>
             <Text style={[styles.journalContent, { color: theme.textPrimary }]}>{entry.content}</Text>
           </View>
 
           {/* Metadata */}
-          <View style={styles.metadataGrid}>
-            {entry.location && (
+          {entry.location && (
+            <View style={styles.metadataGrid}>
               <View style={[styles.metadataCard, {
                 backgroundColor: theme.cardBackground,
                 borderColor: theme.border,
@@ -148,8 +163,8 @@ export default function SingleDayJournalScreen() {
                 <Text style={[styles.metadataLabel, { color: theme.textSecondary }]}>Location</Text>
                 <Text style={[styles.metadataValue, { color: theme.textPrimary }]}>{entry.location}</Text>
               </View>
-            )}
-          </View>
+            </View>
+          )}
 
           {/* Edit Button */}
           <TouchableOpacity 
@@ -260,37 +275,43 @@ const styles = StyleSheet.create({
   imagePlaceholderText: {
     fontSize: 48,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    lineHeight: 40,
-  },
-  ratingSection: {
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
+  ratingDisplay: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    justifyContent: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
     borderWidth: 2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
   },
-  ratingLabel: {
-    fontSize: 18,
-    fontWeight: '600',
+  ratingEmoji: {
+    fontSize: 32,
   },
   ratingText: {
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  noteSection: {
+    marginBottom: 20,
+  },
+  noteTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    lineHeight: 32,
   },
   contentSection: {
     borderRadius: 20,
     padding: 24,
     marginBottom: 24,
     borderWidth: 2,
+  },
+  contentLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 12,
   },
   journalContent: {
     fontSize: 17,
