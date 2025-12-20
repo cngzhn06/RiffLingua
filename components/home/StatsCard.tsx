@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import Card from '@/components/common/Card';
-import { Colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface StatItemProps {
   number: number;
@@ -14,23 +14,27 @@ interface StatsCardProps {
 }
 
 function StatItem({ number, label }: StatItemProps) {
+  const { theme } = useTheme();
+  
   return (
     <View style={styles.statItem}>
-      <Text style={styles.statNumber}>{number}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statNumber, { color: theme.primary }]}>{number}</Text>
+      <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{label}</Text>
     </View>
   );
 }
 
 export default function StatsCard({ dayStreak, totalEntries, totalSongs }: StatsCardProps) {
+  const { theme } = useTheme();
+  
   return (
     <Card style={styles.card}>
-      <Text style={styles.title}>🔥 Your Progress</Text>
+      <Text style={[styles.title, { color: theme.textPrimary }]}>🔥 Your Progress</Text>
       <View style={styles.statsRow}>
         <StatItem number={dayStreak} label="Day Streak" />
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: theme.border }]} />
         <StatItem number={totalEntries} label="Entries" />
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: theme.border }]} />
         <StatItem number={totalSongs} label="Songs" />
       </View>
     </Card>
@@ -44,7 +48,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.text,
     marginBottom: 20,
   },
   statsRow: {
@@ -59,18 +62,15 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: Colors.primary,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 13,
-    color: Colors.textSecondary,
     fontWeight: '600',
   },
   divider: {
     width: 1,
     height: 40,
-    backgroundColor: Colors.backgroundDark,
   },
 });
 

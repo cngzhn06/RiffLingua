@@ -15,11 +15,12 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import StarRating from '@/components/common/StarRating';
 import MoodPicker from '@/components/journal/MoodPicker';
 import { createJournal, updateJournal } from '@/services/database';
-import { Colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function WriteDayScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { theme } = useTheme();
   
   // Edit mode kontrolü
   const isEditMode = params.editMode === 'true';
@@ -128,7 +129,7 @@ export default function WriteDayScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
@@ -142,11 +143,15 @@ export default function WriteDayScreen() {
         >
           {/* Main Content Input */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>What happened today?</Text>
+            <Text style={[styles.sectionLabel, { color: theme.textPrimary }]}>What happened today?</Text>
             <TextInput
-              style={styles.contentInput}
+              style={[styles.contentInput, { 
+                backgroundColor: theme.cardBackground,
+                color: theme.textPrimary,
+                borderColor: theme.primary + '40',
+              }]}
               placeholder="Write about your day..."
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={theme.textSecondary}
               multiline
               value={content}
               onChangeText={setContent}
@@ -163,15 +168,18 @@ export default function WriteDayScreen() {
 
           {/* Rating Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>How was your day?</Text>
-            <View style={styles.ratingContainer}>
+            <Text style={[styles.sectionLabel, { color: theme.textPrimary }]}>How was your day?</Text>
+            <View style={[styles.ratingContainer, { 
+              backgroundColor: theme.cardBackground,
+              borderColor: theme.primary + '40',
+            }]}>
               <StarRating 
                 rating={rating} 
                 onRatingChange={setRating}
                 size="large"
               />
               {rating > 0 && (
-                <Text style={styles.ratingText}>
+                <Text style={[styles.ratingText, { color: theme.primary }]}>
                   {rating === 5 ? 'Amazing!' : 
                    rating === 4 ? 'Great!' : 
                    rating === 3 ? 'Good' : 
@@ -183,11 +191,15 @@ export default function WriteDayScreen() {
 
           {/* Location Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>📍 Location</Text>
+            <Text style={[styles.sectionLabel, { color: theme.textPrimary }]}>📍 Location</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, {
+                backgroundColor: theme.cardBackground,
+                color: theme.textPrimary,
+                borderColor: theme.primary + '40',
+              }]}
               placeholder="Where were you?"
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={theme.textSecondary}
               value={location}
               onChangeText={setLocation}
               returnKeyType="done"
@@ -196,43 +208,57 @@ export default function WriteDayScreen() {
 
           {/* Quick Note Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>💭 Quick Note</Text>
+            <Text style={[styles.sectionLabel, { color: theme.textPrimary }]}>💭 Quick Note</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, {
+                backgroundColor: theme.cardBackground,
+                color: theme.textPrimary,
+                borderColor: theme.primary + '40',
+              }]}
               placeholder="One sentence summary..."
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={theme.textSecondary}
               value={note}
               onChangeText={setNote}
               maxLength={100}
               returnKeyType="done"
             />
-            <Text style={styles.charCount}>{note.length}/100</Text>
+            <Text style={[styles.charCount, { color: theme.textSecondary }]}>{note.length}/100</Text>
           </View>
 
           {/* Add Image Button */}
           <TouchableOpacity 
-            style={styles.imageButton}
+            style={[styles.imageButton, {
+              backgroundColor: theme.cardBackground,
+              borderColor: theme.primary + '40',
+            }]}
             onPress={handleAddImage}
           >
             <Text style={styles.imageButtonIcon}>📷</Text>
-            <Text style={styles.imageButtonText}>Add Photos</Text>
+            <Text style={[styles.imageButtonText, { color: theme.primary }]}>Add Photos</Text>
           </TouchableOpacity>
 
         </ScrollView>
 
         {/* Buttons - Fixed at bottom */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, {
+          backgroundColor: theme.background,
+          borderTopColor: theme.border,
+        }]}>
           <TouchableOpacity 
-            style={styles.clearButton}
+            style={[styles.clearButton, {
+              backgroundColor: theme.cardBackground,
+              borderColor: theme.danger,
+            }]}
             onPress={handleClear}
           >
-            <Text style={styles.clearButtonText}>Clear All</Text>
+            <Text style={[styles.clearButtonText, { color: theme.danger }]}>Clear All</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={[
-              styles.saveButton, 
-              (!content || rating === 0 || saving) && styles.saveButtonDisabled
+              styles.saveButton,
+              { backgroundColor: theme.primary },
+              (!content || rating === 0 || saving) && [styles.saveButtonDisabled, { backgroundColor: theme.lightGray }]
             ]}
             onPress={handleSave}
             disabled={!content || rating === 0 || saving}
@@ -250,7 +276,6 @@ export default function WriteDayScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
@@ -260,7 +285,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 120, // Footer için daha fazla boşluk
+    paddingBottom: 120,
   },
   section: {
     marginBottom: 24,
@@ -268,55 +293,42 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text,
     marginBottom: 12,
   },
   contentInput: {
-    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
-    color: Colors.text,
     minHeight: 200,
     borderWidth: 2,
-    borderColor: Colors.primaryLight,
-    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
   },
   input: {
-    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: Colors.text,
     borderWidth: 2,
-    borderColor: Colors.primaryLight,
   },
   ratingContainer: {
-    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     gap: 12,
     borderWidth: 2,
-    borderColor: Colors.primaryLight,
   },
   ratingText: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.primary,
   },
   charCount: {
     fontSize: 12,
-    color: Colors.textLight,
     textAlign: 'right',
     marginTop: 4,
   },
   imageButton: {
-    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 20,
     flexDirection: 'row',
@@ -324,7 +336,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     borderWidth: 2,
-    borderColor: Colors.primaryLight,
     borderStyle: 'dashed',
   },
   imageButtonIcon: {
@@ -333,7 +344,6 @@ const styles = StyleSheet.create({
   imageButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.primary,
   },
   footer: {
     position: 'absolute',
@@ -341,44 +351,36 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 20,
-    backgroundColor: Colors.background,
     borderTopWidth: 1,
-    borderTopColor: Colors.primaryLight,
     flexDirection: 'row',
     gap: 12,
   },
   clearButton: {
     flex: 1,
-    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 18,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: Colors.danger,
   },
   clearButtonText: {
-    color: Colors.danger,
     fontSize: 16,
     fontWeight: 'bold',
   },
   saveButton: {
     flex: 2,
-    backgroundColor: Colors.primary,
     borderRadius: 16,
     padding: 18,
     alignItems: 'center',
-    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   saveButtonDisabled: {
-    backgroundColor: Colors.textLight,
     shadowOpacity: 0,
   },
   saveButtonText: {
-    color: Colors.surface,
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
   },

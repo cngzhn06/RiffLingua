@@ -1,24 +1,36 @@
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import ActivityCard from '@/components/home/ActivityCard';
 import StatsCard from '@/components/home/StatsCard';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <ScrollView 
         style={styles.container}
         showsVerticalScrollIndicator={false}
         bounces={true}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerEmoji}>✨</Text>
-          <Text style={styles.headerTitle}>Today's Practice</Text>
-          <Text style={styles.headerSubtitle}>Choose your learning adventure</Text>
+        <View style={[styles.header, { backgroundColor: theme.primary }]}>
+          <View style={styles.headerTop}>
+            <View>
+              <Text style={styles.headerEmoji}>✨</Text>
+              <Text style={[styles.headerTitle, { color: theme.cardBackground }]}>Today's Practice</Text>
+              <Text style={[styles.headerSubtitle, { color: theme.cardBackground + 'DD' }]}>Choose your learning adventure</Text>
+            </View>
+            <TouchableOpacity 
+              style={[styles.settingsButton, { backgroundColor: theme.cardBackground + '20' }]}
+              onPress={() => router.push('/screens/settings')}
+            >
+              <Text style={styles.settingsIcon}>⚙️</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.content}>
@@ -67,18 +79,31 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
   },
   header: {
-    backgroundColor: Colors.primary,
     padding: 32,
     paddingTop: 24,
     paddingBottom: 40,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  settingsButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  settingsIcon: {
+    fontSize: 24,
   },
   headerEmoji: {
     fontSize: 40,
@@ -87,12 +112,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: Colors.surface,
     marginBottom: 8,
   },
   headerSubtitle: {
     fontSize: 17,
-    color: Colors.surface + 'DD',
     fontWeight: '500',
   },
   content: {

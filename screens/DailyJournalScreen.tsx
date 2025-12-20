@@ -8,10 +8,11 @@ import CalendarModal from '@/components/journal/CalendarModal';
 import JournalHeader from '@/components/journal/JournalHeader';
 import FloatingWriteButton from '@/components/journal/FloatingWriteButton';
 import EmptyState from '@/components/journal/EmptyState';
-import { Colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function DailyJournalScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [calendarVisible, setCalendarVisible] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [journals, setJournals] = useState<JournalEntry[]>([]);
@@ -103,7 +104,7 @@ export default function DailyJournalScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <View style={styles.container}>
         {/* Calendar Header */}
         <JournalHeader
@@ -151,7 +152,6 @@ export default function DailyJournalScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,

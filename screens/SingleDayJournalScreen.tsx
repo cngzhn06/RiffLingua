@@ -4,9 +4,10 @@ import { useState, useCallback } from 'react';
 import { getJournalByDate, updateJournal } from '@/services/database';
 import { JournalEntry } from '@/types/journal';
 import StarRating from '@/components/common/StarRating';
-import { Colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function SingleDayJournalScreen() {
+  const { theme } = useTheme();
   const { date } = useLocalSearchParams();
   const router = useRouter();
   
@@ -49,12 +50,12 @@ export default function SingleDayJournalScreen() {
 
   if (!entry) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>📝</Text>
-          <Text style={styles.noEntry}>No journal entry for this date</Text>
+          <Text style={[styles.noEntry, { color: theme.textSecondary }]}>No journal entry for this date</Text>
           <TouchableOpacity 
-            style={styles.createButton}
+            style={[styles.createButton, { backgroundColor: theme.primary }]}
             onPress={() => router.push('/screens/write-day')}
           >
             <Text style={styles.createButtonText}>Create Entry</Text>
@@ -75,12 +76,12 @@ export default function SingleDayJournalScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           {/* Date Header */}
           <View style={styles.dateHeader}>
-            <Text style={styles.date}>{formatDate(entry.date)}</Text>
+            <Text style={[styles.date, { color: theme.textSecondary }]}>{formatDate(entry.date)}</Text>
             {entry.mood && <Text style={styles.mood}>{entry.mood}</Text>}
           </View>
 
@@ -105,18 +106,21 @@ export default function SingleDayJournalScreen() {
           )}
 
           {/* Title */}
-          <Text style={styles.title}>{entry.title}</Text>
+          <Text style={[styles.title, { color: theme.textPrimary }]}>{entry.title}</Text>
 
           {/* Rating */}
-          <View style={styles.ratingSection}>
-            <Text style={styles.ratingLabel}>How was your day?</Text>
+          <View style={[styles.ratingSection, {
+            backgroundColor: theme.cardBackground,
+            borderColor: theme.border,
+          }]}>
+            <Text style={[styles.ratingLabel, { color: theme.textPrimary }]}>How was your day?</Text>
             <StarRating 
               rating={rating} 
               onRatingChange={handleRatingChange}
               size="large"
             />
             {rating > 0 && (
-              <Text style={styles.ratingText}>
+              <Text style={[styles.ratingText, { color: theme.primary }]}>
                 {rating === 5 ? 'Amazing! 🤩' : 
                  rating === 4 ? 'Great! 😊' : 
                  rating === 3 ? 'Good 😐' : 
@@ -126,24 +130,30 @@ export default function SingleDayJournalScreen() {
           </View>
 
           {/* Content */}
-          <View style={styles.contentSection}>
-            <Text style={styles.journalContent}>{entry.content}</Text>
+          <View style={[styles.contentSection, {
+            backgroundColor: theme.cardBackground,
+            borderColor: theme.border,
+          }]}>
+            <Text style={[styles.journalContent, { color: theme.textPrimary }]}>{entry.content}</Text>
           </View>
 
           {/* Metadata */}
           <View style={styles.metadataGrid}>
             {entry.location && (
-              <View style={styles.metadataCard}>
+              <View style={[styles.metadataCard, {
+                backgroundColor: theme.cardBackground,
+                borderColor: theme.border,
+              }]}>
                 <Text style={styles.metadataIcon}>📍</Text>
-                <Text style={styles.metadataLabel}>Location</Text>
-                <Text style={styles.metadataValue}>{entry.location}</Text>
+                <Text style={[styles.metadataLabel, { color: theme.textSecondary }]}>Location</Text>
+                <Text style={[styles.metadataValue, { color: theme.textPrimary }]}>{entry.location}</Text>
               </View>
             )}
           </View>
 
           {/* Edit Button */}
           <TouchableOpacity 
-            style={styles.editButton}
+            style={[styles.editButton, { backgroundColor: theme.primary }]}
             onPress={() => router.push({
               pathname: '/screens/write-day',
               params: {
@@ -170,7 +180,6 @@ export default function SingleDayJournalScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
@@ -190,23 +199,20 @@ const styles = StyleSheet.create({
   },
   noEntry: {
     fontSize: 20,
-    color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: 30,
   },
   createButton: {
-    backgroundColor: Colors.primary,
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 16,
-    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   createButtonText: {
-    color: Colors.surface,
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -218,7 +224,6 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 16,
-    color: Colors.textLight,
     fontWeight: '600',
   },
   mood: {
@@ -247,7 +252,7 @@ const styles = StyleSheet.create({
   },
   imagePlaceholder: {
     flex: 1,
-    backgroundColor: Colors.primaryLight + '15',
+    backgroundColor: '#E5E7EB',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 12,
@@ -258,46 +263,37 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: Colors.text,
     marginBottom: 24,
     lineHeight: 40,
   },
   ratingSection: {
-    backgroundColor: Colors.surface,
     borderRadius: 20,
     padding: 24,
     marginBottom: 24,
     alignItems: 'center',
     gap: 16,
     borderWidth: 2,
-    borderColor: Colors.primaryLight + '20',
-    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
   },
   ratingLabel: {
     fontSize: 18,
-    color: Colors.text,
     fontWeight: '600',
   },
   ratingText: {
     fontSize: 20,
-    color: Colors.primary,
     fontWeight: 'bold',
   },
   contentSection: {
-    backgroundColor: Colors.surface,
     borderRadius: 20,
     padding: 24,
     marginBottom: 24,
     borderWidth: 2,
-    borderColor: Colors.primaryLight + '20',
   },
   journalContent: {
     fontSize: 17,
-    color: Colors.text,
     lineHeight: 28,
   },
   metadataGrid: {
@@ -307,42 +303,36 @@ const styles = StyleSheet.create({
   },
   metadataCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
     borderRadius: 16,
-    padding: 6,
+    padding: 16,
     alignItems: 'center',
     gap: 8,
     borderWidth: 2,
-    borderColor: Colors.primaryLight + '20',
   },
   metadataIcon: {
     fontSize: 28,
   },
   metadataLabel: {
     fontSize: 12,
-    color: Colors.textLight,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
   metadataValue: {
     fontSize: 16,
-    color: Colors.text,
     fontWeight: 'bold',
     textAlign: 'center',
   },
   editButton: {
-    backgroundColor: Colors.primary,
     padding: 18,
     borderRadius: 16,
     alignItems: 'center',
-    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   editButtonText: {
-    color: Colors.surface,
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
   },

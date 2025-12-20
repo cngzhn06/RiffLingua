@@ -1,23 +1,63 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { initDatabase } from '@/services/database';
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+const ONBOARDING_STORAGE_KEY = '@rifflingua_onboarding_completed';
+
+function RootLayoutNav() {
+  const router = useRouter();
+  const segments = useSegments();
+  const { theme, themeMode } = useTheme();
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    checkOnboarding();
+  }, []);
+
+  const checkOnboarding = async () => {
+    try {
+      const hasCompletedOnboarding = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
+      
+      // If onboarding not completed and not already on onboarding screen
+      if (!hasCompletedOnboarding && segments[0] !== 'onboarding') {
+        router.replace('/onboarding');
+      }
+    } catch (error) {
+      console.error('Failed to check onboarding status:', error);
+    } finally {
+      setIsReady(true);
+    }
+  };
 
   // Initialize database on app start
   useEffect(() => {
     initDatabase().catch(console.error);
   }, []);
 
+  if (!isReady) {
+    return null;
+  }
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+    <>
+      <Stack
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: theme.cardBackground,
+          },
+          headerTintColor: theme.primary,
+          headerShadowVisible: false,
+        }}
+      >
+        <Stack.Screen 
+          name="onboarding" 
+          options={{ headerShown: false }} 
+        />
         <Stack.Screen 
           name="index" 
           options={{ headerShown: false }} 
@@ -59,8 +99,23 @@ export default function RootLayout() {
             presentation: 'modal'
           }} 
         />
+        <Stack.Screen 
+          name="screens/settings" 
+          options={{ 
+            title: 'Settings',
+            headerBackTitle: 'Home'
+          }} 
+        />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootLayoutNav />
     </ThemeProvider>
   );
 }
