@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { useTheme } from '@/contexts/ThemeContext';
 import { todaysSong } from '@/data/songs';
 import { Song } from '@/types/song';
+import { getLyrics } from '@/services/lyricsService';
 
 const { width } = Dimensions.get('window');
 
@@ -19,7 +22,38 @@ export default function SongScreen() {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState<'lyrics' | 'vocabulary' | 'translation'>('lyrics');
   const [playing, setPlaying] = useState(false);
-  const song = todaysSong;
+  const [song, setSong] = useState<Song>(todaysSong);
+  const [loadingLyrics, setLoadingLyrics] = useState(false);
+  const [lyricsError, setLyricsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Şarkı sözlerini API'den dinamik olarak çek
+    const fetchLyrics = async () => {
+      // Eğer şarkı sözleri zaten mevcutsa (statik veriden), API'ye gitme
+      if (todaysSong.lyrics) {
+        console.log('✅ Statik şarkı sözleri kullanılıyor');
+        setSong(prev => ({ ...prev, lyrics: todaysSong.lyrics }));
+        return;
+      }
+
+      setLoadingLyrics(true);
+      setLyricsError(null);
+      
+      try {
+        console.log(`🎵 Şarkı sözleri çekiliyor: ${song.title} - ${song.artist}`);
+        const lyrics = await getLyrics(song.artist, song.title);
+        setSong(prev => ({ ...prev, lyrics }));
+        console.log('✅ Şarkı sözleri başarıyla yüklendi');
+      } catch (error: any) {
+        console.error('Şarkı sözleri çekilemedi:', error);
+        setLyricsError(error.message || 'Şarkı sözleri yüklenemedi');
+      } finally {
+        setLoadingLyrics(false);
+      }
+    };
+
+    fetchLyrics();
+  }, [song.artist, song.title]);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -168,9 +202,33 @@ export default function SongScreen() {
         <View style={styles.contentContainer}>
           {activeTab === 'lyrics' && (
             <View style={[styles.contentCard, { backgroundColor: theme.cardBackground }]}>
-              <Text style={[styles.lyricsText, { color: theme.textPrimary }]}>
-                {song.lyrics}
-              </Text>
+              {loadingLyrics ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color={theme.primary} />
+                  <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
+                    Şarkı sözleri yükleniyor...
+                  </Text>
+                </View>
+              ) : lyricsError ? (
+                <View style={styles.errorContainer}>
+                  <Text style={[styles.errorText, { color: theme.textSecondary }]}>
+                    ⚠️ {lyricsError}
+                  </Text>
+                  {song.lyrics && (
+                    <Text style={[styles.lyricsText, { color: theme.textPrimary, marginTop: 16 }]}>
+                      {song.lyrics}
+                    </Text>
+                  )}
+                </View>
+              ) : song.lyrics ? (
+                <Text style={[styles.lyricsText, { color: theme.textPrimary }]}>
+                  {song.lyrics}
+                </Text>
+              ) : (
+                <Text style={[styles.errorText, { color: theme.textSecondary }]}>
+                  Şarkı sözleri bulunamadı
+                </Text>
+              )}
             </View>
           )}
 
@@ -378,5 +436,22 @@ const styles = StyleSheet.create({
   example: {
     fontSize: 15,
     lineHeight: 22,
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+  },
+  errorContainer: {
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

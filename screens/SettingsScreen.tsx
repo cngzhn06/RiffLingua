@@ -1,15 +1,39 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/contexts/ThemeContext';
+import { fetchSongWithLyrics } from '@/services/lyricsService';
 
 const ONBOARDING_STORAGE_KEY = '@rifflingua_onboarding_completed';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { theme, themeMode, toggleTheme } = useTheme();
+  const [testingLyrics, setTestingLyrics] = useState(false);
+
+  const handleTestLyrics = async () => {
+    setTestingLyrics(true);
+    try {
+      // Test şarkısı: Yesterday - The Beatles
+      const result = await fetchSongWithLyrics('Yesterday', 'The Beatles');
+      
+      Alert.alert(
+        '✅ Başarılı!',
+        `Şarkı: ${result.title}\nSanatçı: ${result.artist}\n\nŞarkı sözleri başarıyla çekildi!\n\n${result.lyrics.substring(0, 150)}...`,
+        [{ text: 'Tamam' }]
+      );
+    } catch (error: any) {
+      Alert.alert(
+        '❌ Hata',
+        `Şarkı sözleri çekilemedi: ${error.message || 'Bilinmeyen hata'}`,
+        [{ text: 'Tamam' }]
+      );
+    } finally {
+      setTestingLyrics(false);
+    }
+  };
 
   const handleResetOnboarding = async () => {
     Alert.alert(
@@ -99,6 +123,28 @@ export default function SettingsScreen() {
               </View>
               <Text style={[styles.arrow, { color: theme.textSecondary }]}>→</Text>
             </TouchableOpacity>
+
+            <View style={[styles.divider, { backgroundColor: theme.lightGray }]} />
+
+            <TouchableOpacity 
+              style={styles.settingRow} 
+              onPress={handleTestLyrics}
+              disabled={testingLyrics}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={[styles.settingTitle, { color: theme.textPrimary }]}>
+                  🎵 Test Lyrics API
+                </Text>
+                <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
+                  Test Genius API connection
+                </Text>
+              </View>
+              {testingLyrics ? (
+                <ActivityIndicator color={theme.primary} />
+              ) : (
+                <Text style={[styles.arrow, { color: theme.textSecondary }]}>→</Text>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -178,6 +224,10 @@ const styles = StyleSheet.create({
   arrow: {
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  divider: {
+    height: 1,
+    marginHorizontal: 20,
   },
   footer: {
     marginTop: 40,

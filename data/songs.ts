@@ -1,108 +1,50 @@
 import { Song } from '@/types/song';
 
 export const todaysSong: Song = {
-  id: 'radiohead-exit-music',
-  title: 'Exit Music (For a Film)',
-  artist: 'Radiohead',
-  youtubeId: 'Bf01riuiJWA', // Official Audio
-  thumbnailUrl: 'https://img.youtube.com/vi/Bf01riuiJWA/maxresdefault.jpg',
-  difficulty: 'Advanced',
-  duration: '4:24',
-  genre: 'Alternative Rock',
+  id: 'adele-set-fire-to-the-rain',
+  title: 'Set Fire to the Rain',
+  artist: 'Adele',
+  youtubeId: 'Ri7-vnrJD3k', // Official Music Video
+  thumbnailUrl: 'https://img.youtube.com/vi/Ri7-vnrJD3k/maxresdefault.jpg',
+  difficulty: 'Intermediate',
+  duration: '4:02',
+  genre: 'Pop / Soul',
   vocabularyWords: [
     {
-      word: 'wake',
-      meaning: 'uyanmak, uyandırmak',
-      example: 'Wake from your sleep',
-      timestamp: '0:15'
+      word: 'set fire',
+      meaning: 'ateşe vermek, yakmak',
+      example: 'I set fire to the rain',
+      timestamp: '1:05'
     },
     {
-      word: 'breathe',
-      meaning: 'nefes almak',
-      example: 'Breathe, keep breathing',
-      timestamp: '1:30'
+      word: 'burn',
+      meaning: 'yanmak, yakmak',
+      example: 'Watched it burn as I touched your face',
+      timestamp: '1:15'
     },
     {
-      word: 'fear',
-      meaning: 'korku, korkmak',
-      example: "Don't lose your nerve",
+      word: 'fall',
+      meaning: 'düşmek, yıkılmak',
+      example: 'When it fell, something died',
+      timestamp: '1:25'
+    },
+    {
+      word: 'reach',
+      meaning: 'ulaşmak, erişmek',
+      example: 'I was reaching for the sky',
+      timestamp: '0:45'
+    },
+    {
+      word: 'drown',
+      meaning: 'boğulmak, batmak',
+      example: 'Let it burn while I cried',
       timestamp: '2:00'
-    },
-    {
-      word: 'hope',
-      meaning: 'umut, umut etmek',
-      example: 'We hope that you choke',
-      timestamp: '3:15'
-    },
-    {
-      word: 'escape',
-      meaning: 'kaçmak, kaçış',
-      example: 'We can escape together',
-      timestamp: '2:45'
     }
   ],
-  lyrics: `Wake from your sleep
-The drying of your tears
-Today we escape
-We escape
-
-Pack and get dressed
-Before your father hears us
-Before all hell breaks loose
-
-Breathe, keep breathing
-Don't lose your nerve
-Breathe, keep breathing
-I can't do this alone
-
-Sing us a song
-A song to keep us warm
-There's such a chill
-Such a chill
-
-And you can laugh
-A spineless laugh
-We hope your rules and wisdom choke you
-Now we are one
-In everlasting peace
-
-We hope that you choke
-That you choke
-We hope that you choke
-That you choke
-We hope that you choke`,
-  translation: `Uykudan uyan
-Gözyaşlarının kuruması
-Bugün kaçıyoruz
-Kaçıyoruz
-
-Toplan ve giyin
-Baban bizi duymadan önce
-Cehennem koparmadan önce
-
-Nefes al, nefes almaya devam et
-Cesaretini kaybetme
-Nefes al, nefes almaya devam et
-Bunu tek başıma yapamam
-
-Bize bir şarkı söyle
-Bizi ısıtacak bir şarkı
-Öyle bir soğukluk var
-Öyle bir soğukluk
-
-Ve gülülebilirsin
-Omurgasız bir gülüş
-Umarız kuralların ve bilgeliğin seni boğar
-Şimdi biriz
-Sonsuz barış içinde
-
-Umarız boğulursun
-Boğulursun
-Umarız boğulursun
-Boğulursun
-Umarız boğulursun`
+  // lyrics alanı boş bırakılıyor - API'den dinamik olarak çekilecek
+  lyrics: undefined,
+  translation: undefined
 };
 
 // Daha fazla şarkı eklenebilir
 export const songLibrary: Song[] = [todaysSong];
-
