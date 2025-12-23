@@ -38,6 +38,11 @@ export function useLyrics({ artist, title, initialLyrics }: UseLyricsOptions): U
   const [error, setError] = useState<string | null>(null);
 
   const fetchLyrics = useCallback(async (forceRefresh = false) => {
+    // Artist veya title boşsa çalışma
+    if (!artist || !title) {
+      return;
+    }
+
     // Statik lyrics varsa API'ye gitme
     if (initialLyrics) {
       console.log('✅ Statik şarkı sözleri kullanılıyor');

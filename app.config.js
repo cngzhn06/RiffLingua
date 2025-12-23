@@ -56,6 +56,7 @@ export default {
       },
       // .env dosyasından okunan API anahtarları
       geniusAccessToken: process.env.GENIUS_ACCESS_TOKEN,
+      youtubeApiKey: process.env.EXPO_PUBLIC_YOUTUBE_API_KEY,
     },
   },
 };
