@@ -1,86 +1,179 @@
 import axios from 'axios';
+import Constants from 'expo-constants';
 
-const LYRICS_APIS = [
-  {
-    name: 'lyrics.ovh',
-    getUrl: (artist: string, title: string) => 
-      `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`,
-    extractLyrics: (data: any) => data?.lyrics?.trim()
-  },
-  {
-    name: 'lyricsgenius-proxy',
-    getUrl: (artist: string, title: string) => 
-      `https://some-random-api.com/lyrics?title=${encodeURIComponent(`${artist} ${title}`)}`,
-    extractLyrics: (data: any) => data?.lyrics?.trim()
-  }
-];
+// ============================================
+// Genius API Konfigürasyonu
+// ============================================
+
+// Token app.config.js üzerinden .env dosyasından okunur
+const GENIUS_ACCESS_TOKEN = Constants.expoConfig?.extra?.geniusAccessToken || '';
+const GENIUS_API_BASE = 'https://api.genius.com';
+const API_TIMEOUT = 20000; // 20 saniye
+
+// ============================================
+// Yardımcı Fonksiyonlar
+// ============================================
 
 /**
- * Şarkı sözlerini çeker - birden fazla API kaynağını dener
+ * Sanatçı ve şarkı adını API için temizler
+ */
+function sanitizeInput(input: string): string {
+  return input.trim().replace(/[^\w\s\-']/g, '');
+}
+
+/**
+ * HTML etiketlerini temizler
+ */
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '');
+}
+
+// ============================================
+// Genius API Fonksiyonları
+// ============================================
+
+/**
+ * Genius'ta şarkı arar
+ */
+async function searchGenius(query: string): Promise<any> {
+  const response = await axios.get(`${GENIUS_API_BASE}/search`, {
+    params: { q: query },
+    headers: {
+      Authorization: `Bearer ${GENIUS_ACCESS_TOKEN}`,
+    },
+    timeout: API_TIMEOUT,
+  });
+
+  return response.data.response.hits;
+}
+
+/**
+ * Genius'tan şarkı detaylarını alır
+ */
+async function getSongDetails(songId: number): Promise<any> {
+  const response = await axios.get(`${GENIUS_API_BASE}/songs/${songId}`, {
+    headers: {
+      Authorization: `Bearer ${GENIUS_ACCESS_TOKEN}`,
+    },
+    timeout: API_TIMEOUT,
+  });
+
+  return response.data.response.song;
+}
+
+/**
+ * Genius sayfasından lyrics çeker (web scraping)
+ */
+async function scrapeLyrics(url: string): Promise<string> {
+  const response = await axios.get(url, {
+    timeout: API_TIMEOUT,
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; RiffLingua/1.0)',
+    },
+  });
+
+  const html = response.data;
+  
+  // Lyrics container'ı bul - Genius'un HTML yapısına göre
+  const lyricsMatch = html.match(/<div[^>]*data-lyrics-container="true"[^>]*>([\s\S]*?)<\/div>/gi);
+  
+  if (lyricsMatch && lyricsMatch.length > 0) {
+    let lyrics = lyricsMatch.join('\n');
+    // HTML etiketlerini temizle
+    lyrics = lyrics.replace(/<br\s*\/?>/gi, '\n');
+    lyrics = stripHtml(lyrics);
+    // Fazla boşlukları temizle
+    lyrics = lyrics.replace(/\n{3,}/g, '\n\n').trim();
+    return lyrics;
+  }
+
+  throw new Error('Lyrics container bulunamadı');
+}
+
+// ============================================
+// Fallback API'ler
+// ============================================
+
+interface LyricsAPI {
+  name: string;
+  getUrl: (artist: string, title: string) => string;
+  extractLyrics: (data: any) => string | undefined;
+}
+
+const FALLBACK_APIS: LyricsAPI[] = [
+  {
+    name: 'lyrics.ovh',
+    getUrl: (artist, title) =>
+      `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`,
+    extractLyrics: (data) => data?.lyrics?.trim(),
+  },
+];
+
+// ============================================
+// Ana Fonksiyon
+// ============================================
+
+/**
+ * Şarkı sözlerini çeker
+ * 1. Önce Genius API'yi dener
+ * 2. Başarısız olursa fallback API'leri dener
  */
 export async function getLyrics(artist: string, title: string): Promise<string> {
-  // Sanatçı ve başlığı temizle
-  const cleanArtist = artist.trim().replace(/[^\w\s-']/g, '');
-  const cleanTitle = title.trim().replace(/[^\w\s-'()]/g, '');
-  
+  const cleanArtist = sanitizeInput(artist);
+  const cleanTitle = sanitizeInput(title);
+  const searchQuery = `${cleanArtist} ${cleanTitle}`;
+
+  console.log(`🎵 Şarkı sözleri aranıyor: ${cleanTitle} - ${cleanArtist}`);
+
+  // 1. Genius API'yi dene
+  try {
+    console.log('🔍 Genius API deneniyor...');
+    
+    const hits = await searchGenius(searchQuery);
+    
+    if (hits && hits.length > 0) {
+      const song = hits[0].result;
+      console.log(`✅ Genius'ta bulundu: ${song.full_title}`);
+      
+      // Lyrics URL'den sözleri çek
+      const lyrics = await scrapeLyrics(song.url);
+      console.log('✅ Şarkı sözleri başarıyla çekildi');
+      return lyrics;
+    }
+  } catch (error: any) {
+    console.log(`⚠️ Genius API başarısız: ${error.message}`);
+  }
+
+  // 2. Fallback API'leri dene
   let lastError: Error | null = null;
-  
-  // Her API'yi sırayla dene
-  for (const api of LYRICS_APIS) {
+
+  for (const api of FALLBACK_APIS) {
     try {
-      console.log(`🎵 ${api.name} API deneniyor: ${cleanTitle} - ${cleanArtist}`);
-      
-      const response = await axios.get(
-        api.getUrl(cleanArtist, cleanTitle),
-        {
-          timeout: 15000, // 15 saniye timeout
-          headers: {
-            'Accept': 'application/json',
-          }
-        }
-      );
-      
+      console.log(`🔍 ${api.name} deneniyor...`);
+
+      const response = await axios.get(api.getUrl(cleanArtist, cleanTitle), {
+        timeout: API_TIMEOUT,
+        headers: { Accept: 'application/json' },
+      });
+
       const lyrics = api.extractLyrics(response.data);
-      
+
       if (lyrics) {
-        console.log(`✅ ${api.name} API'den sözler bulundu`);
+        console.log(`✅ ${api.name} başarılı`);
         return lyrics;
       }
     } catch (error: any) {
-      console.log(`⚠️ ${api.name} API başarısız:`, error.message);
+      console.log(`⚠️ ${api.name} başarısız: ${error.message}`);
       lastError = error;
-      // Sonraki API'yi dene
-      continue;
     }
   }
-  
-  // Hiçbir API çalışmadıysa hata fırlat
-  if (lastError?.response?.status === 404) {
+
+  // Hata durumları
+  if ((lastError as any)?.response?.status === 404) {
     throw new Error('Bu şarkının sözleri bulunamadı');
   }
-  
-  throw new Error(`Şarkı sözleri çekilemedi: ${lastError?.message || 'Tüm API kaynakları başarısız oldu'}`);
-}
 
-/**
- * Şarkı sözlerini getirir (sadece Lyrics.ovh kullanır)
- */
-export async function fetchSongWithLyrics(title: string, artist: string) {
-  try {
-    console.log(`🎵 Şarkı sözleri aranıyor: ${title} - ${artist}`);
-    
-    // Lyrics.ovh'den sözleri al
-    const lyrics = await getLyrics(artist, title);
-    console.log('✅ Şarkı sözleri bulundu');
-    
-    return {
-      title,
-      artist,
-      lyrics
-    };
-  } catch (error: any) {
-    console.error('Şarkı sözleri alınamadı:', error);
-    throw error;
-  }
+  throw new Error(
+    `Şarkı sözleri çekilemedi: ${lastError?.message || 'Tüm API kaynakları başarısız'}`
+  );
 }
-

@@ -1,50 +1,49 @@
 import { Song } from '@/types/song';
 
 export const todaysSong: Song = {
-  id: 'adele-set-fire-to-the-rain',
-  title: 'Set Fire to the Rain',
-  artist: 'Adele',
-  youtubeId: 'Ri7-vnrJD3k', // Official Music Video
-  thumbnailUrl: 'https://img.youtube.com/vi/Ri7-vnrJD3k/maxresdefault.jpg',
+  id: 'radiohead-creep',
+  title: 'Creep',
+  artist: 'Radiohead',
+  youtubeId: 'XFkzRNyygfk', // Official Video
+  thumbnailUrl: 'https://img.youtube.com/vi/XFkzRNyygfk/maxresdefault.jpg',
   difficulty: 'Intermediate',
-  duration: '4:02',
-  genre: 'Pop / Soul',
+  duration: '3:56',
+  genre: 'Alternative Rock',
   vocabularyWords: [
     {
-      word: 'set fire',
-      meaning: 'ateşe vermek, yakmak',
-      example: 'I set fire to the rain',
+      word: 'creep',
+      meaning: 'sürüngen, tuhaf biri',
+      example: "I'm a creep",
       timestamp: '1:05'
     },
     {
-      word: 'burn',
-      meaning: 'yanmak, yakmak',
-      example: 'Watched it burn as I touched your face',
+      word: 'weirdo',
+      meaning: 'garip, acayip biri',
+      example: "I'm a weirdo",
+      timestamp: '1:08'
+    },
+    {
+      word: 'belong',
+      meaning: 'ait olmak',
+      example: "I don't belong here",
       timestamp: '1:15'
     },
     {
-      word: 'fall',
-      meaning: 'düşmek, yıkılmak',
-      example: 'When it fell, something died',
-      timestamp: '1:25'
+      word: 'notice',
+      meaning: 'fark etmek',
+      example: "You'd notice",
+      timestamp: '0:30'
     },
     {
-      word: 'reach',
-      meaning: 'ulaşmak, erişmek',
-      example: 'I was reaching for the sky',
-      timestamp: '0:45'
-    },
-    {
-      word: 'drown',
-      meaning: 'boğulmak, batmak',
-      example: 'Let it burn while I cried',
+      word: 'perfect',
+      meaning: 'mükemmel',
+      example: "You're so very special",
       timestamp: '2:00'
     }
   ],
-  // lyrics alanı boş bırakılıyor - API'den dinamik olarak çekilecek
+  // Lyrics API'den çekilecek - boş bırak
   lyrics: undefined,
   translation: undefined
 };
 
-// Daha fazla şarkı eklenebilir
 export const songLibrary: Song[] = [todaysSong];
