@@ -106,6 +106,13 @@ function RootLayoutNav() {
             headerBackTitle: 'Home'
           }} 
         />
+        <Stack.Screen 
+          name="screens/saved-songs" 
+          options={{ 
+            title: 'Kayıtlı Şarkılar',
+            headerBackTitle: 'Geri'
+          }} 
+        />
       </Stack>
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
     </>

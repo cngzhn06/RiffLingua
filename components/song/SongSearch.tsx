@@ -17,6 +17,8 @@ interface SongSearchProps {
   isCollapsed?: boolean;
   currentSong?: { artist: string; title: string } | null;
   onClear?: () => void;
+  remainingSearches?: number;
+  onSavedSongsPress?: () => void;
 }
 
 /**
@@ -29,6 +31,8 @@ export function SongSearch({
   isCollapsed = false,
   currentSong,
   onClear,
+  remainingSearches = 2,
+  onSavedSongsPress,
 }: SongSearchProps) {
   const [artist, setArtist] = useState('');
   const [title, setTitle] = useState('');
@@ -94,11 +98,39 @@ export function SongSearch({
     <View style={[styles.container, { backgroundColor: theme.cardBackground }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.label, { color: theme.textPrimary }]}>🎵 Şarkı Ara</Text>
+        <View style={styles.headerRow}>
+          <Text style={[styles.label, { color: theme.textPrimary }]}>🎵 Şarkı Ara</Text>
+          <View style={[
+            styles.creditBadge, 
+            { backgroundColor: remainingSearches > 0 ? theme.primary + '20' : '#ff4444' + '20' }
+          ]}>
+            <Text style={[
+              styles.creditText, 
+              { color: remainingSearches > 0 ? theme.primary : '#ff4444' }
+            ]}>
+              {remainingSearches}/2 hak
+            </Text>
+          </View>
+        </View>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
           Sanatçı ve şarkı adını girin
         </Text>
       </View>
+      
+      {/* Kayıtlı Şarkılar Butonu */}
+      {onSavedSongsPress && (
+        <TouchableOpacity
+          style={[styles.savedSongsButton, { backgroundColor: theme.background }]}
+          onPress={onSavedSongsPress}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.savedSongsIcon}>📚</Text>
+          <Text style={[styles.savedSongsText, { color: theme.textSecondary }]}>
+            Kayıtlı Şarkılar
+          </Text>
+          <Text style={[styles.savedSongsArrow, { color: theme.textSecondary }]}>→</Text>
+        </TouchableOpacity>
+      )}
       
       {/* Input alanları - yan yana */}
       <View style={styles.inputRow}>
@@ -186,10 +218,43 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 16,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
   label: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 4,
+  },
+  creditBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  creditText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  savedSongsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  savedSongsIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  savedSongsText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  savedSongsArrow: {
+    fontSize: 16,
   },
   subtitle: {
     fontSize: 13,

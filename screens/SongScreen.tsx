@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Text } from 'react-native';
+import { View, ScrollView, StyleSheet, Text, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 // Context
 import { useTheme } from '@/contexts/ThemeContext';
@@ -11,6 +12,13 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 // Services
 import { searchYouTubeVideo, YouTubeVideo } from '@/services/youtubeService';
+import {
+  canSearch,
+  useSearchCredit,
+  saveSong,
+  isSongSaved,
+  getRemainingSearches,
+} from '@/services/songLimitService';
 
 // Components
 import {
@@ -28,8 +36,18 @@ import {
  */
 export default function SongScreen() {
   const { theme } = useTheme();
+  const router = useRouter();
+  const params = useLocalSearchParams<{
+    artist?: string;
+    title?: string;
+    fromSaved?: string;
+    videoId?: string;
+    channelTitle?: string;
+  }>();
+  
   const [activeTab, setActiveTab] = useState<TabType>('lyrics');
   const [isPlaying, setIsPlaying] = useState(false);
+  const [remainingSearches, setRemainingSearches] = useState(2);
   
   // Aranan şarkı bilgileri
   const [searchedSong, setSearchedSong] = useState<{ artist: string; title: string } | null>(null);
@@ -37,6 +55,31 @@ export default function SongScreen() {
   // YouTube video
   const [youtubeVideo, setYoutubeVideo] = useState<YouTubeVideo | null>(null);
   const [videoLoading, setVideoLoading] = useState(false);
+  
+  // Kayıtlı şarkıdan mı geldi?
+  const isFromSaved = params.fromSaved === 'true';
+
+  // Başlangıçta kalan hakkı ve kayıtlı şarkı parametrelerini kontrol et
+  useEffect(() => {
+    const init = async () => {
+      const remaining = await getRemainingSearches();
+      setRemainingSearches(remaining);
+      
+      // Kayıtlı şarkıdan gelindiyse direkt yükle
+      if (params.artist && params.title && isFromSaved) {
+        setSearchedSong({ artist: params.artist, title: params.title });
+        if (params.videoId) {
+          setYoutubeVideo({
+            videoId: params.videoId,
+            title: params.title,
+            channelTitle: params.channelTitle || '',
+            thumbnailUrl: '',
+          });
+        }
+      }
+    };
+    init();
+  }, [params.artist, params.title, isFromSaved, params.videoId, params.channelTitle]);
 
   // Lyrics hook - arama yapıldığında çalışır
   const { lyrics, isLoading: lyricsLoading, error } = useLyrics({
@@ -44,6 +87,22 @@ export default function SongScreen() {
     title: searchedSong?.title || '',
     initialLyrics: undefined,
   });
+
+  // Lyrics yüklendiğinde şarkıyı otomatik kaydet (yeni aramaysa)
+  useEffect(() => {
+    const autoSave = async () => {
+      if (lyrics && searchedSong && !isFromSaved) {
+        await saveSong({
+          artist: searchedSong.artist,
+          title: searchedSong.title,
+          lyrics,
+          videoId: youtubeVideo?.videoId,
+          channelTitle: youtubeVideo?.channelTitle,
+        });
+      }
+    };
+    autoSave();
+  }, [lyrics, searchedSong, youtubeVideo, isFromSaved]);
 
   // Translation hook - lyrics yüklendiğinde ve translation sekmesi aktifken çalışır
   const { 
@@ -79,10 +138,52 @@ export default function SongScreen() {
     fetchVideo();
   }, [searchedSong]);
 
-  const handleSearch = useCallback((artist: string, title: string) => {
+  const handleSearch = useCallback(async (artist: string, title: string) => {
+    // Önce bu şarkı kayıtlı mı kontrol et
+    const savedSong = await isSongSaved(artist, title);
+    
+    if (savedSong) {
+      // Kayıtlı şarkı - limit harcama
+      console.log('✅ Kayıtlı şarkı bulundu, limit harcanmıyor');
+      setSearchedSong({ artist, title });
+      if (savedSong.videoId) {
+        setYoutubeVideo({
+          videoId: savedSong.videoId,
+          title: savedSong.title,
+          channelTitle: savedSong.channelTitle || '',
+          thumbnailUrl: '',
+        });
+      }
+      setIsPlaying(false);
+      return;
+    }
+    
+    // Yeni arama - limit kontrolü
+    const hasCredit = await canSearch();
+    
+    if (!hasCredit) {
+      Alert.alert(
+        'Günlük Limit Doldu',
+        'Bugünkü 2 şarkı arama hakkınızı kullandınız. Kayıtlı şarkılarınıza erişebilir veya yarın tekrar deneyebilirsiniz.',
+        [
+          { text: 'Tamam', style: 'cancel' },
+          { 
+            text: 'Kayıtlı Şarkılar', 
+            onPress: () => router.push('/screens/saved-songs')
+          },
+        ]
+      );
+      return;
+    }
+    
+    // Hakkı kullan
+    await useSearchCredit();
+    const remaining = await getRemainingSearches();
+    setRemainingSearches(remaining);
+    
     setSearchedSong({ artist, title });
     setIsPlaying(false);
-  }, []);
+  }, [router]);
 
   const handleClearSearch = useCallback(() => {
     setSearchedSong(null);
@@ -108,6 +209,8 @@ export default function SongScreen() {
           isCollapsed={!!searchedSong}
           currentSong={searchedSong}
           onClear={handleClearSearch}
+          remainingSearches={remainingSearches}
+          onSavedSongsPress={() => router.push('/screens/saved-songs')}
         />
 
         {/* Aranan şarkı varsa göster */}
