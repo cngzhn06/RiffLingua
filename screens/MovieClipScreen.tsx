@@ -4,7 +4,7 @@ export default function MovieClipScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Movie Clip of the Day</Text>
-      <Text style={styles.subtitle}>Friends</Text>
+      <Text style={styles.subtitle}>Brooklyn Nine-Nine</Text>
     </View>
   );
 }

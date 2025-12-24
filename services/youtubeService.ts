@@ -1,16 +1,11 @@
 import axios from 'axios';
-import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_CONFIG } from '@/config';
 
 // ============================================
-// YouTube API Konfigürasyonu
+// Cache Konfigürasyonu
 // ============================================
 
-const YOUTUBE_API_KEY = Constants.expoConfig?.extra?.youtubeApiKey || '';
-const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
-const API_TIMEOUT = 15000;
-
-// Cache key prefix
 const YOUTUBE_CACHE_PREFIX = 'youtube_cache_';
 
 // ============================================
@@ -51,25 +46,27 @@ export async function searchYouTubeVideo(artist: string, title: string): Promise
   }
 
   // API key kontrolü
-  if (!YOUTUBE_API_KEY) {
+  if (!API_CONFIG.youtube.enabled) {
     console.log('⚠️ YouTube API key bulunamadı');
     return null;
   }
 
   try {
     const searchQuery = `${artist} ${title} official`;
-    console.log(`🎬 YouTube\'da aranıyor: ${searchQuery}`);
+    console.log(`🎬 YouTube'da aranıyor: ${searchQuery}`);
 
-    const response = await axios.get(`${YOUTUBE_API_BASE}/search`, {
+    const { baseUrl, apiKey } = API_CONFIG.youtube;
+
+    const response = await axios.get(`${baseUrl}/search`, {
       params: {
         part: 'snippet',
         q: searchQuery,
         type: 'video',
         videoCategoryId: '10', // Music category
         maxResults: 1,
-        key: YOUTUBE_API_KEY,
+        key: apiKey,
       },
-      timeout: API_TIMEOUT,
+      timeout: API_CONFIG.timeout,
     });
 
     const items = response.data.items;
@@ -116,4 +113,3 @@ export async function clearYouTubeCache(): Promise<void> {
     console.error('YouTube cache temizleme hatası:', error);
   }
 }
-

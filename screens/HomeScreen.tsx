@@ -4,12 +4,10 @@ import { Colors } from '@/constants/colors';
 import ActivityCard from '@/components/home/ActivityCard';
 import StatsCard from '@/components/home/StatsCard';
 import { useTheme } from '@/contexts/ThemeContext';
-import { todaysSong } from '@/data/songs';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const song = todaysSong;
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -36,12 +34,12 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.content}>
-          {/* Song of the Day */}
+          {/* Song Search */}
           <ActivityCard
             icon="🎵"
-            label="SONG OF THE DAY"
-            title={song.title}
-            subtitle={song.artist}
+            label="LEARN WITH MUSIC"
+            title="Search Songs"
+            subtitle="Learn English through lyrics"
             color="#FF6B9D"
             onPress={() => router.push('/screens/song')}
           />
@@ -50,8 +48,8 @@ export default function HomeScreen() {
           <ActivityCard
             icon="🎬"
             label="MOVIE CLIP"
-            title="Friends"
-            subtitle="Season 1, Episode 1"
+            title="Brooklyn Nine-Nine"
+            subtitle="Season 1, Episode 5"
             color="#6C63FF"
             onPress={() => router.push('/screens/movie-clip')}
           />

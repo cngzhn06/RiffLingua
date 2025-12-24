@@ -1,14 +1,5 @@
 import axios from 'axios';
-import Constants from 'expo-constants';
-
-// ============================================
-// Genius API Konfigürasyonu
-// ============================================
-
-// Token app.config.js üzerinden .env dosyasından okunur
-const GENIUS_ACCESS_TOKEN = Constants.expoConfig?.extra?.geniusAccessToken || '';
-const GENIUS_API_BASE = 'https://api.genius.com';
-const API_TIMEOUT = 20000; // 20 saniye
+import { API_CONFIG } from '@/config';
 
 // ============================================
 // Yardımcı Fonksiyonlar
@@ -28,6 +19,75 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '');
 }
 
+/**
+ * HTML entities decode eder (&#x27; -> ', &amp; -> &, vb.)
+ */
+function decodeHtmlEntities(text: string): string {
+  let decoded = text;
+  
+  // Named entities
+  decoded = decoded.replace(/&amp;/gi, '&');
+  decoded = decoded.replace(/&lt;/gi, '<');
+  decoded = decoded.replace(/&gt;/gi, '>');
+  decoded = decoded.replace(/&quot;/gi, '"');
+  decoded = decoded.replace(/&#39;/gi, "'");
+  decoded = decoded.replace(/&#x27;/gi, "'");
+  decoded = decoded.replace(/&apos;/gi, "'");
+  decoded = decoded.replace(/&#x2F;/gi, '/');
+  decoded = decoded.replace(/&#x60;/gi, '`');
+  decoded = decoded.replace(/&#x3D;/gi, '=');
+  decoded = decoded.replace(/&nbsp;/gi, ' ');
+  decoded = decoded.replace(/&ndash;/gi, '-');
+  decoded = decoded.replace(/&mdash;/gi, '-');
+  decoded = decoded.replace(/&lsquo;/gi, "'");
+  decoded = decoded.replace(/&rsquo;/gi, "'");
+  decoded = decoded.replace(/&ldquo;/gi, '"');
+  decoded = decoded.replace(/&rdquo;/gi, '"');
+  decoded = decoded.replace(/&hellip;/gi, '...');
+  
+  // Numeric entities (&#123; or &#x1F;)
+  decoded = decoded.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)));
+  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  
+  return decoded;
+}
+
+/**
+ * Genius'tan gelen lyrics'i temizler
+ * - İlk satırı siler (contributor bilgisi)
+ * - [Chorus], [Verse], [Bridge] gibi bölüm etiketlerini kaldırır
+ */
+function cleanLyrics(lyrics: string): string {
+  let cleaned = lyrics;
+  
+  // Satırlara böl
+  const lines = cleaned.split('\n');
+  
+  // İlk satırı kontrol et - "Contributors" veya rakamla başlıyorsa sil
+  if (lines.length > 0) {
+    const firstLine = lines[0].toLowerCase();
+    if (
+      firstLine.includes('contributor') ||
+      firstLine.includes('translation') ||
+      /^\d+\s*contributor/i.test(lines[0]) ||
+      /^\d+\s*translation/i.test(lines[0])
+    ) {
+      lines.shift();
+    }
+  }
+  
+  cleaned = lines.join('\n');
+  
+  // Köşeli parantez içindeki bölüm etiketlerini kaldır
+  // [Chorus], [Verse 1], [Bridge], [Intro], [Outro], [Pre-Chorus], vb.
+  cleaned = cleaned.replace(/\[.*?\]/g, '');
+  
+  // Fazla boş satırları temizle
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
+  
+  return cleaned;
+}
+
 // ============================================
 // Genius API Fonksiyonları
 // ============================================
@@ -36,29 +96,17 @@ function stripHtml(html: string): string {
  * Genius'ta şarkı arar
  */
 async function searchGenius(query: string): Promise<any> {
-  const response = await axios.get(`${GENIUS_API_BASE}/search`, {
+  const { baseUrl, accessToken } = API_CONFIG.genius;
+  
+  const response = await axios.get(`${baseUrl}/search`, {
     params: { q: query },
     headers: {
-      Authorization: `Bearer ${GENIUS_ACCESS_TOKEN}`,
+      Authorization: `Bearer ${accessToken}`,
     },
-    timeout: API_TIMEOUT,
+    timeout: API_CONFIG.timeout,
   });
 
   return response.data.response.hits;
-}
-
-/**
- * Genius'tan şarkı detaylarını alır
- */
-async function getSongDetails(songId: number): Promise<any> {
-  const response = await axios.get(`${GENIUS_API_BASE}/songs/${songId}`, {
-    headers: {
-      Authorization: `Bearer ${GENIUS_ACCESS_TOKEN}`,
-    },
-    timeout: API_TIMEOUT,
-  });
-
-  return response.data.response.song;
 }
 
 /**
@@ -66,7 +114,7 @@ async function getSongDetails(songId: number): Promise<any> {
  */
 async function scrapeLyrics(url: string): Promise<string> {
   const response = await axios.get(url, {
-    timeout: API_TIMEOUT,
+    timeout: API_CONFIG.timeout,
     headers: {
       'User-Agent': 'Mozilla/5.0 (compatible; RiffLingua/1.0)',
     },
@@ -82,8 +130,10 @@ async function scrapeLyrics(url: string): Promise<string> {
     // HTML etiketlerini temizle
     lyrics = lyrics.replace(/<br\s*\/?>/gi, '\n');
     lyrics = stripHtml(lyrics);
-    // Fazla boşlukları temizle
-    lyrics = lyrics.replace(/\n{3,}/g, '\n\n').trim();
+    // HTML entities decode et
+    lyrics = decodeHtmlEntities(lyrics);
+    // Genius'a özel temizlik (contributor, [Chorus] vb.)
+    lyrics = cleanLyrics(lyrics);
     return lyrics;
   }
 
@@ -115,7 +165,7 @@ const FALLBACK_APIS: LyricsAPI[] = [
 
 /**
  * Şarkı sözlerini çeker
- * 1. Önce Genius API'yi dener
+ * 1. Önce Genius API'yi dener (API key varsa)
  * 2. Başarısız olursa fallback API'leri dener
  */
 export async function getLyrics(artist: string, title: string): Promise<string> {
@@ -125,23 +175,27 @@ export async function getLyrics(artist: string, title: string): Promise<string> 
 
   console.log(`🎵 Şarkı sözleri aranıyor: ${cleanTitle} - ${cleanArtist}`);
 
-  // 1. Genius API'yi dene
-  try {
-    console.log('🔍 Genius API deneniyor...');
-    
-    const hits = await searchGenius(searchQuery);
-    
-    if (hits && hits.length > 0) {
-      const song = hits[0].result;
-      console.log(`✅ Genius'ta bulundu: ${song.full_title}`);
+  // 1. Genius API'yi dene (API key varsa)
+  if (API_CONFIG.genius.enabled) {
+    try {
+      console.log('🔍 Genius API deneniyor...');
       
-      // Lyrics URL'den sözleri çek
-      const lyrics = await scrapeLyrics(song.url);
-      console.log('✅ Şarkı sözleri başarıyla çekildi');
-      return lyrics;
+      const hits = await searchGenius(searchQuery);
+      
+      if (hits && hits.length > 0) {
+        const song = hits[0].result;
+        console.log(`✅ Genius'ta bulundu: ${song.full_title}`);
+        
+        // Lyrics URL'den sözleri çek
+        const lyrics = await scrapeLyrics(song.url);
+        console.log('✅ Şarkı sözleri başarıyla çekildi');
+        return lyrics;
+      }
+    } catch (error: any) {
+      console.log(`⚠️ Genius API başarısız: ${error.message}`);
     }
-  } catch (error: any) {
-    console.log(`⚠️ Genius API başarısız: ${error.message}`);
+  } else {
+    console.log('⚠️ Genius API key bulunamadı, fallback kullanılıyor');
   }
 
   // 2. Fallback API'leri dene
@@ -152,7 +206,7 @@ export async function getLyrics(artist: string, title: string): Promise<string> 
       console.log(`🔍 ${api.name} deneniyor...`);
 
       const response = await axios.get(api.getUrl(cleanArtist, cleanTitle), {
-        timeout: API_TIMEOUT,
+        timeout: API_CONFIG.timeout,
         headers: { Accept: 'application/json' },
       });
 

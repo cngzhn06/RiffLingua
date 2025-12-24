@@ -7,6 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 
 // Hooks
 import { useLyrics } from '@/hooks/useLyrics';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Services
 import { searchYouTubeVideo, YouTubeVideo } from '@/services/youtubeService';
@@ -44,6 +45,18 @@ export default function SongScreen() {
     initialLyrics: undefined,
   });
 
+  // Translation hook - lyrics yüklendiğinde ve translation sekmesi aktifken çalışır
+  const { 
+    translation, 
+    isLoading: translationLoading, 
+    error: translationError,
+    refetch: refetchTranslation,
+  } = useTranslation({
+    text: lyrics,
+    targetLang: 'tr',
+    enabled: activeTab === 'translation' && !!lyrics,
+  });
+
   // YouTube video ara
   useEffect(() => {
     const fetchVideo = async () => {
@@ -71,6 +84,11 @@ export default function SongScreen() {
     setIsPlaying(false);
   }, []);
 
+  const handleClearSearch = useCallback(() => {
+    setSearchedSong(null);
+    setYoutubeVideo(null);
+  }, []);
+
   const handleVideoStateChange = (state: string) => {
     if (state === 'ended') {
       setIsPlaying(false);
@@ -82,11 +100,14 @@ export default function SongScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Şarkı Arama */}
+        {/* Şarkı Arama - Arama yapılınca küçülür */}
         <SongSearch
           onSearch={handleSearch}
           isLoading={isLoading}
           theme={theme}
+          isCollapsed={!!searchedSong}
+          currentSong={searchedSong}
+          onClear={handleClearSearch}
         />
 
         {/* Aranan şarkı varsa göster */}
@@ -104,8 +125,9 @@ export default function SongScreen() {
                 <Text style={styles.videoPlaceholderText}>🎬 Video yükleniyor...</Text>
               </View>
             ) : (
-              <View style={[styles.videoPlaceholder, { backgroundColor: '#000' }]}>
-                <Text style={styles.videoPlaceholderText}>🎬 Video bulunamadı</Text>
+              <View style={[styles.videoPlaceholder, { backgroundColor: '#1a1a1a' }]}>
+                <Text style={styles.videoPlaceholderIcon}>🎵</Text>
+                <Text style={styles.videoPlaceholderText}>Video bulunamadı</Text>
               </View>
             )}
 
@@ -118,9 +140,11 @@ export default function SongScreen() {
                 {searchedSong.artist}
               </Text>
               {youtubeVideo && (
-                <Text style={[styles.channelName, { color: theme.textSecondary }]}>
-                  📺 {youtubeVideo.channelTitle}
-                </Text>
+                <View style={[styles.channelBadge, { backgroundColor: theme.primary + '15' }]}>
+                  <Text style={[styles.channelName, { color: theme.primary }]}>
+                    📺 {youtubeVideo.channelTitle}
+                  </Text>
+                </View>
               )}
             </View>
 
@@ -151,7 +175,10 @@ export default function SongScreen() {
 
               {activeTab === 'translation' && (
                 <TranslationContent
-                  translation={undefined}
+                  translation={translation}
+                  isLoading={translationLoading}
+                  error={translationError}
+                  onRetry={refetchTranslation}
                   theme={theme}
                 />
               )}
@@ -163,8 +190,11 @@ export default function SongScreen() {
         {!searchedSong && (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🎶</Text>
+            <Text style={[styles.emptyTitle, { color: theme.textPrimary }]}>
+              Şarkı Sözleri Keşfet
+            </Text>
             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-              Şarkı sözlerini ve videosunu görmek için yukarıdan arama yapın
+              Yukarıdaki arama kutusuna sanatçı ve şarkı adını girerek şarkı sözlerini görüntüleyin
             </Text>
           </View>
         )}
@@ -186,21 +216,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  videoPlaceholderIcon: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
   videoPlaceholderText: {
-    color: '#fff',
-    fontSize: 16,
+    color: '#888',
+    fontSize: 14,
   },
   songHeader: {
     marginHorizontal: 16,
     marginTop: -30,
     padding: 20,
-    borderRadius: 16,
+    borderRadius: 20,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
   },
   songTitle: {
     fontSize: 24,
@@ -212,9 +246,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  channelBadge: {
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
   channelName: {
     fontSize: 12,
-    marginTop: 8,
+    fontWeight: '600',
   },
   contentContainer: {
     padding: 16,
@@ -222,16 +262,22 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: 32,
+    paddingHorizontal: 32,
   },
   emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
+    fontSize: 72,
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
-    paddingHorizontal: 32,
+    lineHeight: 22,
   },
   bottomSpacer: {
     height: 40,
